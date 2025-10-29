@@ -1,0 +1,5 @@
+{
+  "name": "Auto Insurance Prep Agent",
+  "description": "A conversational AI chatbot that helps users understand their auto insurance needs before they buy a policy. The bot provides explanations and dynamically changes images to illustrate different coverage types.",
+  "requestFramePermissions": []
+}
