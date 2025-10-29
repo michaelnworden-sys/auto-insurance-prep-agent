@@ -6,6 +6,7 @@ interface ChatPanelProps {
   isLoading: boolean;
   error: string | null;
   onSendMessage: (message: string) => void;
+  onViewScenario?: (imageKey: string) => void;
 }
 
 const AgentAvatar: React.FC = () => (
@@ -17,7 +18,7 @@ const AgentAvatar: React.FC = () => (
 );
 
 
-export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, error, onSendMessage }) => {
+export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, error, onSendMessage, onViewScenario }) => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +45,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, error
         }
         .animate-fade-in-message { animation: fade-in-message 0.3s ease-out forwards; }
       `}</style>
-      <header className="hidden md:block p-4 border-b border-slate-700 flex-shrink-0">
+      <header className="hidden lg:block p-4 border-b border-slate-700 flex-shrink-0">
          <h1 className="text-xl font-light text-cyan-400 text-center">Auto Insurance Prep Agent</h1>
       </header>
 
@@ -54,6 +55,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, error
             {msg.role === 'model' && <AgentAvatar />}
             <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${msg.role === 'user' ? 'bg-cyan-600 text-white rounded-br-none' : 'bg-slate-700 text-gray-200 rounded-bl-none'}`}>
               <p className="whitespace-pre-wrap font-normal text-sm leading-relaxed">{msg.text}</p>
+              {msg.hasScenario && onViewScenario && msg.imageKeyForScenario && (
+                  <button 
+                    onClick={() => onViewScenario(msg.imageKeyForScenario!)}
+                    className="mt-3 w-full text-left p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors text-cyan-300 text-sm font-semibold flex items-center gap-2"
+                  >
+                    📖 View Scenario
+                  </button>
+              )}
             </div>
           </div>
         ))}

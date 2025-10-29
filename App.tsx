@@ -2,7 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { ChatPanel } from './components/ChatPanel';
 import { ImagePanel } from './components/ImagePanel';
 import { ChalkboardPanel } from './components/ChalkboardPanel';
-import { MobileSummaryDropdown } from './components/MobileSummaryDropdown';
+import { MobileHeader } from './components/MobileHeader';
+import { PlanModal } from './components/PlanModal';
+import { ScenarioModal } from './components/ScenarioModal';
 import { getInsuranceBotResponse } from './services/geminiService';
 import { Message, CoverageDetails } from './types';
 import { INITIAL_MESSAGE, INITIAL_STORY, PROGRESS_STEPS } from './constants';
@@ -17,7 +19,10 @@ const App: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState<boolean>(false);
+  
+  // New state for modals
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState<boolean>(false);
+  const [isScenarioModalOpen, setIsScenarioModalOpen] = useState<boolean>(false);
 
   const handleSendMessage = useCallback(async (userInput: string) => {
     if (!userInput.trim()) return;
@@ -27,7 +32,7 @@ const App: React.FC = () => {
     setMessages(newMessages);
     setIsLoading(true);
     setError(null);
-    setIsMobileSummaryOpen(false); // Close dropdown on new message
+    setIsPlanModalOpen(false); // Close plan modal on new message
 
     try {
       const chatHistory = newMessages.map(msg => ({
@@ -40,7 +45,17 @@ const App: React.FC = () => {
 
       const { responseText, imageKey, story, coverageUpdate } = await getInsuranceBotResponse(prompt, chatHistory);
       
-      setMessages(prev => [...prev, { role: 'model', text: responseText }]);
+      const hasScenario = responseText.includes('[VIEW_SCENARIO]');
+      const cleanedText = responseText.replace('[VIEW_SCENARIO]', '').trim();
+
+      const modelMessage: Message = {
+        role: 'model',
+        text: cleanedText,
+        hasScenario: hasScenario,
+        imageKeyForScenario: hasScenario ? imageKey : undefined,
+      };
+
+      setMessages(prev => [...prev, modelMessage]);
       setCurrentImageKey(imageKey);
       if (story) {
         setCurrentStory(story);
@@ -63,6 +78,16 @@ const App: React.FC = () => {
     }
   }, [messages]);
 
+  const handleTogglePlanModal = () => setIsPlanModalOpen(prev => !prev);
+  const handleOpenScenarioModal = (key: string) => {
+    setCurrentImageKey(key);
+    setIsScenarioModalOpen(true);
+  };
+  const handleCloseModals = () => {
+    setIsPlanModalOpen(false);
+    setIsScenarioModalOpen(false);
+  };
+
   const completedSteps = PROGRESS_STEPS.filter(step => {
     if (step === 'vehicle') {
       const { year, makeModel, state } = coverageDetails.vehicle;
@@ -74,15 +99,63 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen font-sans bg-slate-900 text-gray-200 overflow-hidden">
-      <header className="md:hidden p-4 bg-slate-800 border-b border-slate-700 shadow-lg fixed top-0 left-0 right-0 z-20">
-        <h1 className="text-xl font-bold text-cyan-400 text-center">Auto Insurance Prep Agent</h1>
-      </header>
+      
+      {/* --- MOBILE LAYOUT --- */}
+      <div className="md:hidden flex flex-col h-full w-full">
+        <MobileHeader onTogglePlan={handleTogglePlanModal} completedSteps={completedSteps} />
+        <main className="flex-1 pt-16 h-full">
+            <ChatPanel 
+              messages={messages} 
+              isLoading={isLoading} 
+              error={error} 
+              onSendMessage={handleSendMessage}
+              onViewScenario={handleOpenScenarioModal}
+            />
+        </main>
+        <PlanModal
+            isOpen={isPlanModalOpen}
+            onClose={handleCloseModals}
+            details={coverageDetails}
+            progress={progressPercent}
+            currentTopic={currentImageKey}
+        />
+        <ScenarioModal 
+            isOpen={isScenarioModalOpen}
+            onClose={handleCloseModals}
+            imageKey={currentImageKey}
+            story={currentStory}
+        />
+      </div>
 
-      {/* Main content area */}
-      <main className="flex flex-col md:flex-row flex-1 w-full h-full md:p-2.5 pt-16 md:pt-0 gap-2.5">
-        
-        {/* --- DESKTOP LAYOUT --- */}
-        <div className="hidden md:flex md:w-1/2 lg:w-3/5 h-full flex-shrink-0 flex-col gap-2.5">
+      {/* --- TABLET LAYOUT --- */}
+      <main className="hidden md:flex lg:hidden flex-row flex-1 w-full h-full p-2.5 gap-2.5">
+          <div className="w-1/3 h-full rounded-[15px] overflow-hidden bg-slate-800">
+             <ChalkboardPanel 
+              details={coverageDetails} 
+              progress={progressPercent}
+              currentTopic={currentImageKey}
+            />
+          </div>
+          <div className="w-2/3 h-full flex-col rounded-[15px] overflow-hidden flex">
+            <ChatPanel 
+                messages={messages} 
+                isLoading={isLoading} 
+                error={error} 
+                onSendMessage={handleSendMessage}
+                onViewScenario={handleOpenScenarioModal}
+            />
+          </div>
+          <ScenarioModal 
+            isOpen={isScenarioModalOpen}
+            onClose={handleCloseModals}
+            imageKey={currentImageKey}
+            story={currentStory}
+          />
+      </main>
+      
+      {/* --- DESKTOP LAYOUT --- */}
+      <main className="hidden lg:flex flex-row flex-1 w-full h-full p-2.5 gap-2.5">
+        <div className="w-1/3 h-full flex-shrink-0 flex-col gap-2.5 flex">
           <div className="h-1/3 rounded-[15px] overflow-hidden bg-slate-800">
             <ChalkboardPanel 
               details={coverageDetails} 
@@ -94,7 +167,7 @@ const App: React.FC = () => {
             <ImagePanel imageKey={currentImageKey} story={currentStory} />
           </div>
         </div>
-        <div className="hidden md:flex md:w-1/2 lg:w-2/5 h-full flex-col rounded-[15px] overflow-hidden">
+        <div className="w-2/3 h-full flex-col rounded-[15px] overflow-hidden flex">
           <ChatPanel 
             messages={messages} 
             isLoading={isLoading} 
@@ -102,33 +175,8 @@ const App: React.FC = () => {
             onSendMessage={handleSendMessage} 
           />
         </div>
-
-        {/* --- MOBILE LAYOUT --- */}
-        <div className="flex md:hidden flex-col h-full w-full">
-          <MobileSummaryDropdown 
-            isOpen={isMobileSummaryOpen}
-            onToggle={() => setIsMobileSummaryOpen(prev => !prev)}
-            details={coverageDetails}
-            currentTopic={currentImageKey}
-          />
-          <div className="h-[35vh] max-h-64 p-2.5 pb-0">
-             <div className="h-full w-full rounded-[15px] overflow-hidden">
-                <ImagePanel imageKey={currentImageKey} story={currentStory} />
-             </div>
-          </div>
-          <div className="flex-1 flex flex-col p-2.5 pt-0">
-            <div className="flex-1 rounded-[15px] overflow-hidden">
-              <ChatPanel 
-                messages={messages} 
-                isLoading={isLoading} 
-                error={error} 
-                onSendMessage={handleSendMessage} 
-              />
-            </div>
-          </div>
-        </div>
-
       </main>
+
     </div>
   );
 };

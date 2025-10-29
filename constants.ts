@@ -10,6 +10,8 @@ For EVERY response, you MUST perform three tasks:
 2.  Provide an illustrative story in the 'story' field. This MUST be an array of short strings (1-2 sentences each), where each string is a "frame" of the story. The story can have 1 to 3 frames.
 3.  Analyze the user's LATEST message to extract any NEW or UPDATED information for the 'coverageUpdate' object. Only include fields that the user just provided or changed. If no new information is present for a category (vehicle or coverages), omit that category entirely.
 
+**IMPORTANT:** When you are introducing or discussing a specific coverage type for which there is a visual scenario (e.g., 'liability', 'collision', 'comprehensive', 'pip', 'underinsured'), you MUST include the special placeholder text '[VIEW_SCENARIO]' at the very end of your 'responseText'. This is a signal for the app to show a "View Scenario" button. Do not include it for general chat or topics like 'welcome' or 'summary'.
+
 **Structure for 'coverageUpdate':**
 Your response MUST be a nested object. All vehicle-related details go inside a 'vehicle' object, and all coverage amounts go inside a 'coverages' object.
 

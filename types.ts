@@ -2,6 +2,8 @@
 export interface Message {
   role: 'user' | 'model';
   text: string;
+  hasScenario?: boolean;
+  imageKeyForScenario?: string;
 }
 
 export interface VehicleDetails {
