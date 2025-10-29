@@ -88,7 +88,13 @@ export const IMAGE_MAP: { [key: string]: MediaInfo } = {
 
 export const INITIAL_MESSAGE: Message = {
   role: 'model',
-  text: "Hello! I'm here to help you figure out what auto insurance you might need. We can talk about different coverages and get you prepared before you shop for a policy. To start, could you please tell me the year, make, and model of your car, and what state you live in?"
+  text: `Hi.
+
+We know buying car insurance is a pain. It's confusing, it's full of numbers, and it's hard to tell what's actually worth paying for and what you can skip.
+
+So we're going to make this simple. Right now we can walk you through each coverage, figure out how much of it you really need, and throw it all on a chalkboard so you can go out and buy some auto insurance with confidence.
+
+If that sounds good to you, write your name down below and we can get started.`
 };
 
 export const INITIAL_STORY: string[] = ["You're about to embark on a journey to find the perfect auto insurance. Let's make sure you're well-prepared with the right knowledge and coverages for the road ahead."];
