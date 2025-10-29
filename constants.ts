@@ -90,11 +90,13 @@ export const INITIAL_MESSAGE: Message = {
   role: 'model',
   text: `Hi.
 
-We know buying car insurance is a pain. It's confusing, it's full of numbers, and it's hard to tell what's actually worth paying for and what you can skip.
+We know buying car insurance is a pain. It's confusing, it's full of numbers, and it's hard to tell what you should buy and what you can skip.
 
-So we're going to make this simple. Right now we can walk you through each coverage, figure out how much of it you really need, and throw it all on a chalkboard so you can go out and buy some auto insurance with confidence.
+So let's walk you through each coverage, figure out how much of it you need, and throw it all on a chalkboard so you can go out and buy your auto insurance with confidence.
 
-If that sounds good to you, write your name down below and we can get started.`
+If that sounds good to you, let's get started.
+
+What's your first name?`
 };
 
 export const INITIAL_STORY: string[] = ["You're about to embark on a journey to find the perfect auto insurance. Let's make sure you're well-prepared with the right knowledge and coverages for the road ahead."];
