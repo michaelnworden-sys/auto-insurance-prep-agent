@@ -155,7 +155,7 @@ const App: React.FC = () => {
       
       {/* --- DESKTOP LAYOUT --- */}
       <main className="hidden lg:flex flex-row flex-1 w-full h-full p-2.5 gap-2.5">
-        <div className="w-1/3 h-full flex-shrink-0 flex-col gap-2.5 flex">
+        <div className="w-1/2 h-full flex-shrink-0 flex-col gap-2.5 flex">
           <div className="h-1/3 rounded-[15px] overflow-hidden bg-slate-800">
             <ChalkboardPanel 
               details={coverageDetails} 
@@ -167,7 +167,7 @@ const App: React.FC = () => {
             <ImagePanel imageKey={currentImageKey} story={currentStory} />
           </div>
         </div>
-        <div className="w-2/3 h-full flex-col rounded-[15px] overflow-hidden flex">
+        <div className="w-1/2 h-full flex-col rounded-[15px] overflow-hidden flex">
           <ChatPanel 
             messages={messages} 
             isLoading={isLoading} 
