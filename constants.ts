@@ -90,9 +90,9 @@ export const INITIAL_MESSAGE: Message = {
   role: 'model',
   text: `Hi.
 
-We know buying car insurance is a pain. It's confusing, it's full of numbers, and it's hard to tell what you should buy and what you can skip.
+We know buying car insurance is a pain. It's confusing, it's full of numbers, and sometimes it's hard to tell what you should buy and what you can skip.
 
-So let's walk you through each coverage, figure out how much of it you need, and throw it all on a chalkboard so you can go out and buy your auto insurance with confidence.
+We'd like to take a minute to walk you through each coverage, figure out how much of it you need, and throw it all on a chalkboard so you can go out and buy your auto insurance with confidence.
 
 If that sounds good to you, let's get started.
 
