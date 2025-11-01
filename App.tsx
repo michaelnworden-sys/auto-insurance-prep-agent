@@ -19,6 +19,7 @@ const App: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [conversationPhase, setConversationPhase] = useState<'info_collection' | 'coverage_discussion'>('info_collection');
   
   // New state for modals
   const [isPlanModalOpen, setIsPlanModalOpen] = useState<boolean>(false);
@@ -43,7 +44,7 @@ const App: React.FC = () => {
       const latestUserMessage = chatHistory.pop();
       const prompt = latestUserMessage?.parts[0].text ?? '';
 
-      const { responseText, imageKey, story, coverageUpdate } = await getInsuranceBotResponse(prompt, chatHistory);
+      const { responseText, imageKey, story, coverageUpdate } = await getInsuranceBotResponse(prompt, chatHistory, conversationPhase);
       
       const hasScenario = responseText.includes('[VIEW_SCENARIO]');
       const cleanedText = responseText.replace('[VIEW_SCENARIO]', '').trim();
@@ -66,6 +67,16 @@ const App: React.FC = () => {
           vehicle: { ...prev.vehicle, ...coverageUpdate.vehicle },
           coverages: { ...prev.coverages, ...coverageUpdate.coverages },
         }));
+
+        // Check if vehicle info is complete and switch to coverage phase
+        if (coverageUpdate.vehicle) {
+          const updatedVehicle = { ...coverageDetails.vehicle, ...coverageUpdate.vehicle };
+          const isVehicleComplete = updatedVehicle.state && updatedVehicle.year && updatedVehicle.makeModel && updatedVehicle.miles;
+          
+          if (isVehicleComplete && conversationPhase === 'info_collection') {
+            setConversationPhase('coverage_discussion');
+          }
+        }
       }
 
     } catch (err) {
@@ -76,7 +87,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [messages]);
+  }, [messages, conversationPhase, coverageDetails.vehicle]);
 
   const handleTogglePlanModal = () => setIsPlanModalOpen(prev => !prev);
   const handleOpenScenarioModal = (key: string) => {

@@ -1,6 +1,5 @@
-
 import { GoogleGenAI } from "@google/genai";
-import { SYSTEM_PROMPT, RESPONSE_SCHEMA } from '../constants';
+import { INFO_COLLECTION_PROMPT, COVERAGE_DISCUSSION_PROMPT, RESPONSE_SCHEMA } from '../constants';
 import { GeminiResponse, HistoryItem } from '../types';
 
 const API_KEY = process.env.API_KEY;
@@ -13,13 +12,18 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export async function getInsuranceBotResponse(
   prompt: string, 
-  history: HistoryItem[]
+  history: HistoryItem[],
+  conversationPhase: 'info_collection' | 'coverage_discussion'
 ): Promise<GeminiResponse> {
   try {
+    const systemPrompt = conversationPhase === 'info_collection' 
+      ? INFO_COLLECTION_PROMPT 
+      : COVERAGE_DISCUSSION_PROMPT;
+
     const chat = ai.chats.create({
       model: 'gemini-2.5-flash',
       config: {
-        systemInstruction: SYSTEM_PROMPT,
+        systemInstruction: systemPrompt,
         responseMimeType: 'application/json',
         responseSchema: RESPONSE_SCHEMA,
         temperature: 0.7,
