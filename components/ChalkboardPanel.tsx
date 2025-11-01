@@ -23,7 +23,7 @@ const COVERAGE_LABELS: { [key in keyof CoverageDetails['coverages']]: string } =
     underinsured: 'Uninsured/Underinsured',
 };
 
-const VEHICLE_KEYS = ['state', 'year', 'makeModel', 'miles', 'condition'];
+const VEHICLE_KEYS = ['state', 'year', 'makeModel', 'miles'];
 const COVERAGE_KEYS = ['liability', 'collision', 'comprehensive', 'pip', 'underinsured'];
 const PROGRESS_STEPS = ['vehicle', ...COVERAGE_KEYS];
 
@@ -83,13 +83,14 @@ export const ChalkboardPanel: React.FC<ChalkboardPanelProps> = ({ details, progr
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+      <div className="flex-1 overflow-y-auto pr-2">
         {!hasAnyDetails ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-slate-500 text-center px-4">Your selected details will appear here as we build your plan.</p>
           </div>
         ) : (
-          <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Vehicle Info Column */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                    <StatusIndicator status={vehicleStatus} />
@@ -105,8 +106,9 @@ export const ChalkboardPanel: React.FC<ChalkboardPanelProps> = ({ details, progr
                 </ul>
               </div>
 
+              {/* Coverage Decisions Column */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">Coverage Decisions</h3>
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Coverage Decisions</h3>
                 <ul className="space-y-1.5">
                   {COVERAGE_KEYS.map((key) => (
                     <li key={key} className="flex justify-between items-center animate-fade-in text-sm">
@@ -119,7 +121,7 @@ export const ChalkboardPanel: React.FC<ChalkboardPanelProps> = ({ details, progr
                   ))}
                 </ul>
               </div>
-          </>
+          </div>
         )}
       </div>
        <style>{`

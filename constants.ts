@@ -93,7 +93,7 @@ You MUST return your response as valid JSON matching this structure:
 
 {
   "responseText": "Your conversational reply",
-  "imageKey": "Use 'vehicle_selection' during info collection, or 'welcome' for initial greeting",
+  "imageKey": "Use 'welcome' for initial greeting, 'info_collection' during vehicle info gathering",
   "story": ["Array of 1-3 short sentences about the current phase"],
   "coverageUpdate": {
     "vehicle": {
@@ -157,6 +157,7 @@ export const PROGRESS_STEPS = ['vehicle', 'liability', 'collision', 'comprehensi
 
 export const IMAGE_MAP: { [key: string]: MediaInfo } = {
   welcome: { src: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1740&auto=format&fit=crop', alt: 'A silver sports car on a winding scenic road.', topic: 'Stop Getting Sold. Start Getting Covered.', type: 'image', story: ["You're about to embark on a journey to find the perfect auto insurance. Let's make sure you're well-prepared with the right knowledge for the road ahead."] },
+  info_collection: { src: 'https://storage.googleapis.com/coverage-coach/microphone%20blue.jpg', alt: 'A vintage microphone representing the information gathering phase.', topic: 'Tell Me About Your Car', type: 'image', story: ["First, I need to know a few basics about your vehicle so we can tailor the coverage options to your situation."] },
   liability: { src: 'https://images.unsplash.com/photo-1542362567-b07e54358753?q=80&w=1740&auto=format&fit=crop', alt: 'Two cars after a minor fender bender, representing liability coverage.', topic: 'Liability Coverage', type: 'image', story: ["You're trying to merge onto a busy street and accidentally misjudge the distance, causing a minor fender-bender with the car in front.", "Liability coverage is what pays for the other person's repairs and medical bills if you're at fault in an accident."] },
   collision: { src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4', alt: 'A car with significant front-end damage after a collision.', topic: 'Collision Coverage', type: 'video', story: ["You're driving through an intersection on a green light when another car unexpectedly runs their red light, hitting your passenger side.", "The impact crumples your door and shatters the window. Thankfully you're okay, but your car will need major repairs.", "Collision coverage helps pay for the damage to your own vehicle, regardless of who is at fault."] },
   comprehensive: { src: 'https://images.unsplash.com/photo-1599941951215-9a4c185b1a6b?q=80&w=1740&auto=format&fit=crop', alt: 'A car with a tree fallen on it, representing comprehensive coverage.', topic: 'Comprehensive Coverage', type: 'image', story: ["A surprise hailstorm rolls through your neighborhood overnight, leaving dozens of small dents on the hood and roof of your parked car.", "Comprehensive coverage handles damage from non-collision events, like weather, theft, vandalism, or hitting an animal."] },
