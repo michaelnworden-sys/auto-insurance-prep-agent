@@ -62,7 +62,7 @@ export const ChalkboardPanel: React.FC<ChalkboardPanelProps> = ({ details, progr
       <div className="flex-shrink-0">
         <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-thin text-cyan-400">
-                Your Insurance Plan
+                Your Auto Insurance Plan
             </h2>
              <button 
                 onClick={() => alert('Your progress has been saved! (This is a demo feature).')}
