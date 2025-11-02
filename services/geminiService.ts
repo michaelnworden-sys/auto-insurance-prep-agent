@@ -47,13 +47,11 @@ export async function getInsuranceBotResponse(
        return {
             responseText: "I'm sorry, I generated an invalid response. Could you please try rephrasing your question?",
             imageKey: 'error',
-            story: ["There was a small glitch in my response format. Let's try that again."],
         };
     }
     return {
       responseText: "I'm having trouble connecting to my brain right now. Please try again in a moment.",
       imageKey: 'error',
-      story: ["I can't seem to connect to the network. Please check your connection or try again soon."],
     };
   }
 }

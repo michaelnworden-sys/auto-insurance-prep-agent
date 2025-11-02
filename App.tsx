@@ -7,7 +7,7 @@ import { PlanModal } from './components/PlanModal';
 import { ScenarioModal } from './components/ScenarioModal';
 import { getInsuranceBotResponse } from './services/geminiService';
 import { Message, CoverageDetails } from './types';
-import { INITIAL_MESSAGE, INITIAL_STORY, PROGRESS_STEPS } from './constants';
+import { INITIAL_MESSAGE, INITIAL_STORY, PROGRESS_STEPS, IMAGE_MAP } from './constants';
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
@@ -44,7 +44,7 @@ const App: React.FC = () => {
       const latestUserMessage = chatHistory.pop();
       const prompt = latestUserMessage?.parts[0].text ?? '';
 
-      const { responseText, imageKey, story, coverageUpdate } = await getInsuranceBotResponse(prompt, chatHistory, conversationPhase);
+      const { responseText, imageKey, coverageUpdate } = await getInsuranceBotResponse(prompt, chatHistory, conversationPhase);
       
       const hasScenario = responseText.includes('[VIEW_SCENARIO]');
       const cleanedText = responseText.replace('[VIEW_SCENARIO]', '').trim();
@@ -58,9 +58,10 @@ const App: React.FC = () => {
 
       setMessages(prev => [...prev, modelMessage]);
       setCurrentImageKey(imageKey);
-      if (story) {
-        setCurrentStory(story);
-      }
+
+      // Look up story from IMAGE_MAP based on imageKey (Method B)
+      const storyFromMap = IMAGE_MAP[imageKey]?.story || null;
+      setCurrentStory(storyFromMap);
 
       if (coverageUpdate) {
         setCoverageDetails(prev => ({
@@ -111,7 +112,7 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col h-screen font-sans bg-slate-900 text-gray-200 overflow-hidden">
       
-      {/* --- MOBILE LAYOUT --- */}
+      {/* --- MOBILE LAYOUT (No Changes) --- */}
       <div className="md:hidden flex flex-col h-full w-full">
         <MobileHeader onTogglePlan={handleTogglePlanModal} completedSteps={completedSteps} />
         <main className="flex-1 pt-16 h-full">
@@ -138,33 +139,33 @@ const App: React.FC = () => {
         />
       </div>
 
-      {/* --- TABLET LAYOUT --- */}
+      {/* --- TABLET LAYOUT (MODIFIED) --- */}
+      {/* This now mirrors the desktop layout structure but with different proportions */}
       <main className="hidden md:flex lg:hidden flex-row flex-1 w-full h-full p-2.5 gap-2.5">
-          <div className="w-1/3 h-full rounded-[15px] overflow-hidden bg-slate-800">
-             <ChalkboardPanel 
-              details={coverageDetails} 
-              progress={progressPercent}
-              currentTopic={currentImageKey}
-            />
+          <div className="w-2/5 h-full flex-shrink-0 flex-col gap-2.5 flex">
+            <div className="h-1/3 rounded-[15px] overflow-hidden bg-slate-800">
+              <ChalkboardPanel 
+                details={coverageDetails} 
+                progress={progressPercent}
+                currentTopic={currentImageKey}
+              />
+            </div>
+            <div className="h-2/3 rounded-[15px] overflow-hidden">
+              <ImagePanel imageKey={currentImageKey} story={currentStory} />
+            </div>
           </div>
-          <div className="w-2/3 h-full flex-col rounded-[15px] overflow-hidden flex">
+          <div className="w-3/5 h-full flex-col rounded-[15px] overflow-hidden flex">
             <ChatPanel 
                 messages={messages} 
                 isLoading={isLoading} 
                 error={error} 
                 onSendMessage={handleSendMessage}
-                onViewScenario={handleOpenScenarioModal}
+                onViewScenario={handleOpenScenarioModal} // Kept in case you want a button too
             />
           </div>
-          <ScenarioModal 
-            isOpen={isScenarioModalOpen}
-            onClose={handleCloseModals}
-            imageKey={currentImageKey}
-            story={currentStory}
-          />
       </main>
       
-      {/* --- DESKTOP LAYOUT --- */}
+      {/* --- DESKTOP LAYOUT (No Changes) --- */}
       <main className="hidden lg:flex flex-row flex-1 w-full h-full p-2.5 gap-2.5">
         <div className="w-1/2 h-full flex-shrink-0 flex-col gap-2.5 flex">
           <div className="h-1/3 rounded-[15px] overflow-hidden bg-slate-800">

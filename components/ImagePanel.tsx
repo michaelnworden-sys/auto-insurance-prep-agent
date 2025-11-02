@@ -52,16 +52,19 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ imageKey, story }) => {
   const hasMultipleFrames = story ? story.length > 1 : false;
 
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden group">
+    // MODIFIED: Added flex and items-end to control alignment
+    <div className="relative w-full h-full bg-black overflow-hidden group flex items-end">
       <div className="absolute inset-0 w-full h-full animate-fade-in-media">
         {mediaElement}
       </div>
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
       
-      <div className="absolute bottom-[3%] left-[3%] right-[3%] md:bottom-[1%] md:left-[1%] md:right-[1%] bg-black/50 backdrop-blur-sm p-5 rounded-lg shadow-2xl animate-slide-up text-left flex items-center">
+      {/* MODIFIED: This entire div is updated for the new layout */}
+      <div className="relative w-full h-[40%] md:h-[35%] bg-black/50 backdrop-blur-sm p-5 rounded-t-lg shadow-2xl animate-slide-up text-left flex items-center">
         <div className="flex-grow pr-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg mb-2">
+            {/* MODIFIED: Headline size is now smaller for the standard view */}
+            <h2 className="text-xl md:text-2xl font-bold text-white drop-shadow-lg mb-2">
             {topic}
             </h2>
             {story && story.length > 0 && (

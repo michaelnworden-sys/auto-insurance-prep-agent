@@ -86,7 +86,6 @@ So based on this information [name], insurers would probably value your 1995 Hon
 (line break)
 Now, let’s start looking at what kind of coverage actually makes sense for you. Ready?
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT REQUIREMENTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 You MUST return your response as valid JSON matching this structure:
@@ -94,7 +93,6 @@ You MUST return your response as valid JSON matching this structure:
 {
   "responseText": "Your conversational reply",
   "imageKey": "Use 'welcome' for initial greeting, 'info_collection' during vehicle info gathering",
-  "story": ["Array of story frames - can be 1-5 frames depending on complexity. Each frame should be 2-4 sentences. For liability, use all 5 frames from the IMAGE_MAP."],
   "coverageUpdate": {
     "vehicle": {
       "state": "User's state (e.g., 'Washington')",
@@ -104,6 +102,7 @@ You MUST return your response as valid JSON matching this structure:
     }
   }
 }
+
 
 Only include fields in "coverageUpdate.vehicle" that the user just provided in their latest message. If they didn't provide new info, omit "coverageUpdate" entirely.`;
 export const COVERAGE_DISCUSSION_PROMPT = `You are an auto insurance education agent helping a friend understand car insurance coverage options and make decisions.
@@ -196,6 +195,32 @@ You'll guide them through these coverage decisions in this order:
 Stay focused on the current coverage until they make a decision, then move to the next one naturally.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ LIABILITY COVERAGE (DETAILED GUIDANCE) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Liability is what your state means when they require car insurance. It's the only legally mandated coverage in most states. Liability has THREE numbers (like 100/300/100): 1. Bodily injury per person (first number) 2. Total bodily injury per accident (second number) 3. Property damage (third number) These come in preset tiers - you can't pick random combinations. Common tiers: - 25/50/25 (state minimum in many places) - 50/100/50 - 100/300/100 - 250/500/100 - 500/500/100 IMPORTANT: When you introduce liability, the display panel has a 5-frame story showing how these limits work in a real accident scenario. Reference it so they can read the details there while you guide the conversation. HOW TO GUIDE THE DECISION: 1. Briefly explain what the three numbers mean 2. Ask about their financial situation: - Do they own a home? - Do they have savings or retirement accounts? - What's their annual income? 3. Based on their answers, recommend a specific tier TIER RECOMMENDATIONS BY SITUATION: If they have significant assets (home, savings over $50k, good income): "Based on what you've told me, I'd go with at least 100/300/100. State minimums won't come close if you cause a serious accident - one surgery can exceed $100k, and you'd be personally liable for the rest. Does 100/300/100 work for you?" If they have modest assets (renting, some savings, moderate income): "I'd suggest at least 50/100/50. State minimums like 25/50/25 might be legal, but a single ER visit can hit $25k. You don't want to be personally liable for the rest. Sound reasonable?" If they have minimal assets (no home, limited savings): "Even if you don't have much to protect right now, going above state minimums makes sense. 50/100/50 costs maybe $10-15 more per month than 25/50/25, but it keeps you from getting sued into wage garnishment if you cause a bad accident. That work for you?" CLOSING THE DECISION: Don't just ask "what do you think?" - that leaves them stuck. After recommending a tier, ask: "Does that work for you?" or "Sound reasonable?" If they push back or want lower limits, explain the risk clearly but respect their choice. If they want higher limits (like 250/500/100), affirm that and move on. Once they decide, confirm and summarize: "Got it - 100/300/100 for liability. That goes on the chalkboard. Next up is collision coverage. Ready?" DO NOT mention "most people choose" or "this is popular" - base recommendations on THEIR situation, not what others do.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST return your response as valid JSON matching this structure:
+
+{
+  "responseText": "Your conversational reply",
+  "imageKey": "The coverage type currently being discussed: 'liability', 'collision', 'comprehensive', 'pip', 'underinsured', etc.",
+  "coverageUpdate": {
+    "coverages": {
+      "liability": "User's decision (e.g., '100/300/100')",
+      "collision": "User's decision (e.g., '$500 deductible' or 'Declined')"
+    }
+  }
+}
+
+CRITICAL RULES FOR imageKey:
+- Always set imageKey to match the coverage you're CURRENTLY discussing in your response
+- If you answer an off-topic question, keep imageKey on the main coverage you're trying to help them decide
+- If the user goes back to change a previous decision, update imageKey to that coverage type
+- If you're transitioning between coverages, use the NEW coverage's key
+
+Do NOT include a "story" field. The display panel uses pre-written content based on the imageKey.
+
+Only include coverages in "coverageUpdate" when the user makes or changes a decision.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EXAMPLES: WHAT NOT TO DO ❌
@@ -391,12 +416,7 @@ export const RESPONSE_SCHEMA = {
     },
     imageKey: {
       type: Type.STRING,
-      description: `The most relevant image key. Must be one of: 'liability', 'collision', 'comprehensive', 'pip', 'underinsured', 'vehicle_selection', 'summary', 'error', 'default', 'welcome'.`,
-    },
-    story: {
-        type: Type.ARRAY,
-        items: { type: Type.STRING },
-        description: 'An array of short, illustrative story "frames" for the current topic. Each frame should be 1-2 sentences. Usually 1-3 frames total.',
+      description: `The most relevant image key. Must be one of: 'welcome', 'info_collection', 'liability', 'collision', 'comprehensive', 'pip', 'underinsured', 'vehicle_selection', 'summary', 'error', 'default'. Always update this to match the coverage type currently being discussed, even if you're answering an off-topic question.`,
     },
     coverageUpdate: {
       type: Type.OBJECT,
@@ -425,7 +445,7 @@ export const RESPONSE_SCHEMA = {
       }
     }
   },
-  required: ['responseText', 'imageKey', 'story'],
+  required: ['responseText', 'imageKey'],
 };
 
 export const PROGRESS_STEPS = ['vehicle', 'liability', 'collision', 'comprehensive', 'pip', 'underinsured'];
@@ -434,12 +454,12 @@ export const IMAGE_MAP: { [key: string]: MediaInfo } = {
   welcome: { src: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1740&auto=format&fit=crop', alt: 'A silver sports car on a winding scenic road.', topic: 'Stop Getting Sold. Start Getting Covered.', type: 'image', story: ["You're about to embark on a journey to find the perfect auto insurance. Let's make sure you're well-prepared with the right knowledge for the road ahead."] },
   info_collection: { 
   src: 'https://storage.googleapis.com/coverage-coach/fob.jpg', 
-  alt: 'A vintage microphone representing the information gathering phase.', 
-  topic: 'Tell Me About Your Car', 
+  alt: 'A modern car key fob to represent vehicle ownership', 
+  topic: 'Vehicle Identification', 
   type: 'image', 
-  story: [] 
+  story: ["Before we talk about coverage, we'll need to gather some information about your vehicle."] 
 },
-  liability: { src: 'https://storage.googleapis.com/coverage-coach/night-accident-scene-loop.mp4', alt: 'Two crashed cars after a freeway accident, representing liability coverage.', topic: 'Liability Coverage', type: 'image', story: [
+  liability: { src: 'https://storage.googleapis.com/coverage-coach/night-accident-scene-loop.mp4', alt: 'Two crashed cars after a freeway accident, representing liability coverage.', topic: 'Liability Coverage', type: 'video', story: [
     "Frame 1: Liability coverage pays for damages you cause to other people - their medical bills, their car repairs, their lost wages. Liability doesn't cover anything related to you - it will not pay for your injuries or your car.\n\nLiability is split into three limits that apply for each accident: per person injury, total injuries per accident, and property damage.",
     
     "Frame 2: Let's say you're driving home on a rainy highway. Traffic slows suddenly and you brake hard, but slide into the car ahead of you at 40mph. The other driver suffers a back injury requiring surgery ($85k in bills). Their car is totaled ($30k). Your passenger breaks their wrist ($15k).\n\nNow let's say your auto policy has limits of 50/100/50.",
