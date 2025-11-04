@@ -21,12 +21,20 @@ const AgentAvatar: React.FC = () => (
 export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, error, onSendMessage, onViewScenario }) => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(scrollToBottom, [messages, isLoading]);
+
+  // Effect to auto-focus the input field
+  useEffect(() => {
+    if (!isLoading && messages[messages.length - 1]?.role === 'model') {
+      inputRef.current?.focus();
+    }
+  }, [messages, isLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +98,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, error
       <div className="p-4 border-t border-slate-700 flex-shrink-0 bg-slate-800">
         <form onSubmit={handleSubmit} className="flex space-x-2">
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
