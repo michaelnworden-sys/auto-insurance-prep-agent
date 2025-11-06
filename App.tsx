@@ -21,9 +21,13 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [conversationPhase, setConversationPhase] = useState<'info_collection' | 'coverage_discussion'>('info_collection');
   
-  // New state for modals
   const [isPlanModalOpen, setIsPlanModalOpen] = useState<boolean>(false);
   const [isScenarioModalOpen, setIsScenarioModalOpen] = useState<boolean>(false);
+
+  // --- NEW: State and handler for the tablet dropdown ---
+  const [isChalkboardOpen, setIsChalkboardOpen] = useState<boolean>(false);
+  const handleToggleChalkboard = () => setIsChalkboardOpen(prev => !prev);
+
 
   const handleSendMessage = useCallback(async (userInput: string) => {
     if (!userInput.trim()) return;
@@ -33,7 +37,7 @@ const App: React.FC = () => {
     setMessages(newMessages);
     setIsLoading(true);
     setError(null);
-    setIsPlanModalOpen(false); // Close plan modal on new message
+    setIsPlanModalOpen(false); 
 
     try {
       const chatHistory = newMessages.map(msg => ({
@@ -59,7 +63,6 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, modelMessage]);
       setCurrentImageKey(imageKey);
 
-      // Look up story from IMAGE_MAP based on imageKey (Method B)
       const storyFromMap = IMAGE_MAP[imageKey]?.story || null;
       setCurrentStory(storyFromMap);
 
@@ -69,7 +72,6 @@ const App: React.FC = () => {
           coverages: { ...prev.coverages, ...coverageUpdate.coverages },
         }));
 
-        // Check if vehicle info is complete and switch to coverage phase
         if (coverageUpdate.vehicle) {
           const updatedVehicle = { ...coverageDetails.vehicle, ...coverageUpdate.vehicle };
           const isVehicleComplete = updatedVehicle.state && updatedVehicle.year && updatedVehicle.makeModel && updatedVehicle.miles;
@@ -139,29 +141,45 @@ const App: React.FC = () => {
         />
       </div>
 
-      {/* --- TABLET LAYOUT (MODIFIED) --- */}
-      {/* This now mirrors the desktop layout structure but with different proportions */}
-      <main className="hidden md:flex lg:hidden flex-row flex-1 w-full h-full p-2.5 gap-2.5">
-          <div className="w-2/5 h-full flex-shrink-0 flex-col gap-2.5 flex">
-            <div className="h-1/3 rounded-[15px] overflow-hidden bg-slate-800">
-              <ChalkboardPanel 
-                details={coverageDetails} 
-                progress={progressPercent}
-                currentTopic={currentImageKey}
-              />
-            </div>
-            <div className="h-2/3 rounded-[15px] overflow-hidden">
-              <ImagePanel imageKey={currentImageKey} story={currentStory} />
-            </div>
+      {/* --- NEW TABLET LAYOUT --- */}
+      <main className="hidden md:flex lg:hidden flex-col flex-1 w-full h-full p-2.5 gap-2.5">
+          {/* Collapsible Chalkboard Header */}
+          <div className="flex-shrink-0">
+              <div 
+                className="bg-slate-800 rounded-[15px] p-4 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition-colors"
+                onClick={handleToggleChalkboard}
+              >
+                <h2 className="font-bold text-lg text-white">Your Auto Insurance Plan</h2>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-cyan-400 transition-transform duration-300 ${isChalkboardOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              {/* Conditionally Rendered Chalkboard Panel */}
+              {isChalkboardOpen && (
+                  <div className="mt-2.5 rounded-[15px] overflow-hidden bg-slate-800 animate-fade-in">
+                      <ChalkboardPanel 
+                          details={coverageDetails} 
+                          progress={progressPercent}
+                          currentTopic={currentImageKey}
+                      />
+                  </div>
+              )}
           </div>
-          <div className="w-3/5 h-full flex-col rounded-[15px] overflow-hidden flex">
-            <ChatPanel 
-                messages={messages} 
-                isLoading={isLoading} 
-                error={error} 
-                onSendMessage={handleSendMessage}
-                onViewScenario={handleOpenScenarioModal} // Kept in case you want a button too
-            />
+          
+          {/* 50/50 Split for Image and Chat */}
+          <div className="flex-1 flex flex-row gap-2.5 overflow-hidden">
+              <div className="w-1/2 h-full rounded-[15px] overflow-hidden">
+                  <ImagePanel imageKey={currentImageKey} story={currentStory} />
+              </div>
+              <div className="w-1/2 h-full rounded-[15px] overflow-hidden">
+                  <ChatPanel 
+                      messages={messages} 
+                      isLoading={isLoading} 
+                      error={error} 
+                      onSendMessage={handleSendMessage}
+                  />
+              </div>
           </div>
       </main>
       
@@ -189,6 +207,16 @@ const App: React.FC = () => {
         </div>
       </main>
 
+      {/* Basic animation for the dropdown content */}
+      <style>{`
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

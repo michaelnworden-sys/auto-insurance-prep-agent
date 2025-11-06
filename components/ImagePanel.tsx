@@ -61,7 +61,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ imageKey, story }) => {
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
       
       {/* MODIFIED: This entire div is updated for the new layout */}
-      <div className="relative w-full h-[40%] md:h-[35%] bg-black/50 backdrop-blur-sm p-5 rounded-t-lg shadow-2xl animate-slide-up text-left flex items-center">
+      <div className="relative w-full h-[40%] md:h-[50%] lg:h-[35%] bg-black/50 backdrop-blur-sm p-5 rounded-t-lg shadow-2xl animate-slide-up text-left flex items-center">
         <div className="flex-grow pr-12">
             {/* MODIFIED: Headline size is now smaller for the standard view */}
             <h2 className="text-xl md:text-2xl font-bold text-white drop-shadow-lg mb-2">
