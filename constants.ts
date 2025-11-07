@@ -80,7 +80,7 @@ User: "15 camry"
 You: "Perfect, 2015 Toyota Camry. How many miles does it have? We don't need the exact mileage, a rough estimate is fine."
 
 User: "around 120k"
-You: "Thanks.
+You: "Thank you.
 (line break)
 So based on this information [name], insurers would probably value your 1995 Honda Accord at around $2,500. That figure focuses on replacement value and doesn’t really reflect any sentimental value or recent work you may have put in.
 (line break)
