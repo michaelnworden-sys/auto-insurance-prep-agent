@@ -383,6 +383,60 @@ If they still want to skip it, respect their choice but confirm understanding.
 ### Step 6: Close the decision
 
 Confirm their choice, add it to the chalkboard, and transition to the next coverage.
+---------
+PIP / MEDPAY COVERAGE (DETAILED GUIDANCE)
+PIP (Personal Injury Protection) - sometimes called MedPay - covers medical expenses for you and your passengers after an accident, regardless of who was at fault.
+PIP requirements vary by state. Some require it. Some don't offer it. Some make it optional.
+IMPORTANT: When you introduce PIP, the display panel has a 5-frame story explaining what PIP covers and how state requirements vary. Reference it so they can read the details while you guide the conversation.
+
+HOW TO GUIDE THE DECISION:
+Step 1: Introduce PIP simply
+"PIP - Personal Injury Protection - covers medical bills for you and your passengers after an accident, regardless of who caused it. But PIP requirements vary by state. Ready to see what applies in [STATE]?"
+Wait for response.
+
+Step 2: State-specific reality check
+Pull their state from vehicle info. Tell them what the law requires:
+If PIP is REQUIRED:
+"[STATE] requires PIP. Minimum is usually around $10,000, but you can go higher for more protection."
+If PIP is OPTIONAL:
+"[STATE] doesn't require PIP - it's optional."
+If PIP is NOT OFFERED (some states use MedPay instead):
+"[STATE] doesn't offer PIP, but has Medical Payments coverage (MedPay) which works similarly - it covers medical bills after an accident."
+Keep this SHORT (2-3 sentences). Ask: "Make sense so far?"
+
+Step 3: Present the coverage amounts
+"PIP is typically offered in amounts like $1,000, $5,000, $10,000, or $25,000. Your insurance carrier might have slightly different options, but let's pick a target amount so you know what to look for."
+Then ask: "Do you have health insurance?"
+
+Step 4: Guide based on health insurance
+If they have health insurance:
+"Since you have health insurance, PIP acts as a supplement - it pays out immediately while your health insurance processes claims. You don't need a huge amount. I'd go with $5,000. That covers immediate expenses without overlapping too much with your health coverage. Work for you?"
+If they want lower: "$1,000 is fine too - just covers immediate out-of-pocket costs."
+If they want higher: "$10,000 gives you more cushion, but you're paying more premium for coverage your health insurance might already handle."
+If they DON'T have health insurance:
+"Without health insurance, PIP is your primary medical coverage after an accident. Medical bills add up fast - even a minor ER visit can hit $5k-10k. I'd recommend at least $10,000, maybe $25,000 if you want stronger protection. Which feels right?"
+If they hesitate: "Think about it this way - if you broke your arm in an accident tomorrow, could you cover $10,000 in medical bills out of pocket? If not, I'd go with the $25,000."
+If they're unsure or don't want to answer about health insurance:
+"Here's the short version: if you have decent health insurance, $5,000 PIP is probably plenty. If you don't, or you're not sure, $10,000 gives you better protection. I'd lean toward $10,000 to be safe. Sound good?"
+
+Step 5: Handle state-required minimums
+If their state REQUIRES a specific minimum (like Florida's $10k):
+"[STATE] requires a minimum of $10,000, so that's your starting point. Want to stick with the minimum or go higher to $25,000?"
+Base recommendation on their health insurance answer and their general coverage philosophy from earlier decisions.
+
+Step 6: Close the decision
+Confirm their choice and add a quick disclaimer:
+"Got it - $[AMOUNT] PIP. When you're actually buying a policy, your carrier's options might be slightly different, but this gives you a solid target."
+Update chalkboard and transition: "Alright, that covers all the main types. Let me pull together everything we've decided."
+
+IMPORTANT NOTES:
+
+Standard amounts to reference: $1,000 / $5,000 / $10,000 / $25,000
+Health insurance is the key factor - supplemental coverage vs. primary coverage
+Anchor to their previous decisions - if they went high on liability, suggest higher PIP
+Keep responses short - ask checkpoint questions every 2-3 sentences
+Don't over-explain - PIP confuses people, simple is better
+If you're unsure of a state's specific rules, make a reasonable recommendation and move on
 
 ---
 
@@ -691,7 +745,17 @@ export const IMAGE_MAP: { [key: string]: MediaInfo } = {
   
   "If your car is financed or leased, your lender requires comprehensive - they won't let you skip it. But even if you own your car outright, think about where you live and park. Do you have a garage, or does your car sit outside? Is deer season a real concern on your commute? Have cars been stolen in your neighborhood? Comprehensive covers the chaos you can't control."
 ] },
-  pip: { src: 'https://storage.googleapis.com/coverage-coach/ambulancepip.jpg', alt: 'A doctor checking a patient, representing personal injury protection.', topic: 'PIP / MedPay', type: 'image', story: ["After a minor accident, you and your passenger both have neck pain that requires a visit to the doctor and a few physical therapy sessions.", "Personal Injury Protection (PIP) or Medical Payments (MedPay) helps cover medical expenses and lost wages for you and your passengers, no matter who caused the accident."] },
+  pip: { src: 'https://storage.googleapis.com/coverage-coach/ambulancepip.jpg', alt: 'An ambulance races through a downtown scene.', topic: 'PIP / MedPay', type: 'image', story: [
+  "Personal Injury Protection (PIP) - sometimes called Medical Payments coverage or MedPay - pays for medical expenses after an accident, regardless of who was at fault. You get rear-ended? PIP covers your medical bills. You cause the accident? PIP still covers your medical bills. It also covers your passengers. This is about getting you and anyone in your car treated immediately without waiting for insurance companies to figure out who's responsible.",
+  
+  "Here's where it gets complicated: PIP requirements vary wildly by state. Some states require it. Some states don't offer it at all. Some states require it but let you opt out if you have health insurance. The coverage limits, what's included, and how it coordinates with your health insurance - all of that depends on where you live.",
+  
+  "PIP usually covers medical bills, but depending on your state it might also cover lost wages if you can't work, rehabilitation costs, and even funeral expenses. Some states have a no-fault system where PIP is your primary coverage regardless of who caused the accident. Other states treat it as secondary to the at-fault driver's liability insurance.",
+  
+  "If you have health insurance, PIP might be redundant - or it might fill gaps your health insurance won't cover, like deductibles or lost wages. Some people skip PIP if they have strong health insurance and live in a state where it's optional. Others need it because their health insurance has high deductibles or won't cover car accident injuries quickly enough.",
+  
+  "This is one of those coverages where your state laws and your personal health insurance situation determine whether it makes sense. If your state requires it, you're buying it. If it's optional, the question is whether your health insurance would cover you adequately after a car accident - and whether you can afford to wait for fault to be determined before getting treatment covered."
+] },
   underinsured: { src: 'https://storage.googleapis.com/coverage-coach/uninsured.jpg', alt: 'A car flees an accident scene', topic: 'Uninsured/Underinsured', type: 'image', story: [
   "Uninsured/Underinsured Motorist coverage protects YOU when someone else causes an accident and can't pay for the damage. If a driver with no insurance rear-ends you at a stoplight, their liability coverage can't help you - because they don't have any. That's when your UM/UIM coverage steps in to pay for your injuries and vehicle damage.",
   
