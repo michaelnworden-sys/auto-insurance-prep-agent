@@ -335,6 +335,65 @@ If they kept collision, they'll often keep comprehensive (consistency in protect
 Location and parking situation matter MORE for comprehensive than collision
 For cars worth under $3000-4000, skipping comprehensive usually makes sense unless they're in a very high-risk area
 Base recommendations on THEIR situation (parking, location, savings), not generics
+-------------------
+# UNINSURED/UNDERINSURED MOTORIST COVERAGE (DETAILED GUIDANCE)
+
+UM/UIM protects YOU when someone else causes an accident but can't pay for the damage—either because they have no insurance (uninsured), or their limits are too low to cover your bills (underinsured).
+
+UM/UIM is **REQUIRED in some states, OPTIONAL in others.**
+
+**IMPORTANT:** When you introduce UM/UIM, the display panel has a 5-frame story showing a hit-and-run scenario and explaining underinsured situations. Reference it so they can read the details while you guide the conversation.
+
+
+## HOW TO GUIDE THE DECISION:
+
+### Step 1: Introduce UM/UIM
+
+Explain what it covers in plain language. Reference the display panel so they can see the scenarios. Check understanding before moving forward. Does this make sense so far?
+
+### Step 2: Clarify what it covers 
+
+Many people confuse this with collision. Be clear:
+- UM/UIM covers **YOUR injuries** (medical bills, lost wages)
+- In some states, it also covers **YOUR car damage** (but collision usually handles that)
+- It does NOT cover the other driver
+
+Ask the user if they have any questions or need any clarification
+
+### Step 3: Present the risk
+
+Use the stats from the display panel: "About 1 in 8 drivers has no insurance. Even drivers who DO have insurance often carry minimums like $25k. If they cause $100k in medical bills for you, their insurance pays $25k and stops. UM/UIM covers the rest."
+
+### Step 4: Check if it's required in their state
+
+**If required:**
+"In [STATE], this is required. The question is how much. Standard practice is matching your liability limits—you chose [X/X/X] for liability, so [X/X] for UM/UIM makes sense. Work for you?"
+
+**If optional:**
+"In [STATE], this is optional. Given 1 in 8 drivers has no insurance, I'd add it. Usually $5-15/month. Want to add it?"
+
+### Step 5: Guide the limits decision
+
+Recommend matching their liability limits. If they want lower limits to save money, explain the risk: "If someone with no insurance puts you in the hospital for $150k and you only have $50k UM coverage, you're paying the other $100k yourself."
+
+If they want to skip it entirely (in optional states), push back gently: "You're betting every other driver has good insurance. Statistically, 1 in 8 doesn't have any. Can you cover your medical bills out of pocket if an uninsured driver T-bones you?"
+
+If they still want to skip it, respect their choice but confirm understanding.
+
+### Step 6: Close the decision
+
+Confirm their choice, add it to the chalkboard, and transition to the next coverage.
+
+---
+
+## IMPORTANT NOTES:
+
+- State requirements vary. Adjust language based on whether it's required or optional.
+- Many people confuse UM/UIM with collision. Emphasize it covers THEIR injuries, not just the car.
+- The display panel explains the hit-and-run and underinsured scenarios. Reference it, don't re-tell it.
+- Recommend matching liability limits (standard practice).
+- If they skipped collision/comprehensive to save money, they might resist UM/UIM too. Emphasize this covers injuries, not just property.
+
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT REQUIREMENTS
@@ -632,8 +691,18 @@ export const IMAGE_MAP: { [key: string]: MediaInfo } = {
   
   "If your car is financed or leased, your lender requires comprehensive - they won't let you skip it. But even if you own your car outright, think about where you live and park. Do you have a garage, or does your car sit outside? Is deer season a real concern on your commute? Have cars been stolen in your neighborhood? Comprehensive covers the chaos you can't control."
 ] },
-  pip: { src: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1740&auto=format&fit=crop', alt: 'A doctor checking a patient, representing personal injury protection.', topic: 'PIP / MedPay', type: 'image', story: ["After a minor accident, you and your passenger both have neck pain that requires a visit to the doctor and a few physical therapy sessions.", "Personal Injury Protection (PIP) or Medical Payments (MedPay) helps cover medical expenses and lost wages for you and your passengers, no matter who caused the accident."] },
-  underinsured: { src: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1674&auto=format&fit=crop', alt: 'A person on the phone looking at their damaged car with a worried expression.', topic: 'Uninsured/Underinsured', type: 'image', story: ["You're sitting at a red light when you're rear-ended. The other driver has no insurance, leaving you with a damaged bumper and a headache.", "This is where Uninsured Motorist coverage kicks in. It protects you by covering your repairs and medical bills when the at-fault driver has no insurance, or not enough insurance, to pay for your damages."] },
+  pip: { src: 'https://storage.googleapis.com/coverage-coach/ambulancepip.jpg', alt: 'A doctor checking a patient, representing personal injury protection.', topic: 'PIP / MedPay', type: 'image', story: ["After a minor accident, you and your passenger both have neck pain that requires a visit to the doctor and a few physical therapy sessions.", "Personal Injury Protection (PIP) or Medical Payments (MedPay) helps cover medical expenses and lost wages for you and your passengers, no matter who caused the accident."] },
+  underinsured: { src: 'https://storage.googleapis.com/coverage-coach/uninsured.jpg', alt: 'A car flees an accident scene', topic: 'Uninsured/Underinsured', type: 'image', story: [
+  "Uninsured/Underinsured Motorist coverage protects YOU when someone else causes an accident and can't pay for the damage. If a driver with no insurance rear-ends you at a stoplight, their liability coverage can't help you - because they don't have any. That's when your UM/UIM coverage steps in to pay for your injuries and vehicle damage.",
+  
+  "Let's say you're sitting at a red light at dusk, first car in line, waiting for the green. It's been a long day and you're ready to get home.",
+  
+  "Out of nowhere, a car comes barreling around you and slams into your driver's side front end. The impact is violent - glass shatters, metal crunches, the airbag deploys. You're dazed, trying to process what just happened.\n\nThe other car stops in the intersection for a moment. You think they're going to get out and check on you, but suddenly - taillights flare bright red and they floor it, speeding away into the distance. Gone.",
+  
+  "Here's the part that confuses people: \"underinsured\" motorist coverage. Let's say the other driver DOES stop, DOES have insurance, but only carries the state minimum - maybe $25,000 per person. Your medical bills from the accident are $40,000. Their insurance pays their $25,000 limit and then... that's it. They're tapped out. Your underinsured motorist coverage pays the remaining $15,000.",
+  
+  "Nationally, about 1 in 8 drivers has no insurance at all. In some states, it's closer to 1 in 4. Even drivers who DO have insurance often carry bare minimum limits. UM/UIM coverage is what protects you when the person who caused the accident can't cover what they owe you. Some states require it. Others don't. Either way, you're betting on every other driver on the road having good insurance - and that's a bad bet."
+] },
   vehicle_selection: { src: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1740&auto=format&fit=crop', alt: 'A shiny, modern yellow sports car.', topic: 'Your Vehicle', type: 'image', story: ["The first step is telling me about your vehicle. Every car has a unique story and insurance profile."] },
   summary: { src: 'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?q=80&w=1740&auto=format&fit=crop', alt: 'A person reviewing an insurance document, representing a summary of needs.', topic: 'Your Insurance Plan', type: 'image', story: ["Let's review the plan we've built together to make sure it's a perfect fit for your needs."] },
   error: { src: 'https://images.unsplash.com/photo-1543285193-33e879824cc7?q=80&w=1740&auto=format&fit=crop', alt: 'A foggy road with low visibility, representing an error or confusion.', topic: 'Oops!', type: 'image', story: ["It seems we've hit a small bump in the road. Let's try that last part again."] },
