@@ -831,7 +831,7 @@ export const IMAGE_MAP: { [key: string]: MediaInfo } = {
   type: 'image', 
   story: ["Before we talk about coverage options, let's collect some information about your vehicle."] 
 },
-  liability: { src: 'https://storage.googleapis.com/coverage-coach/night-accident-scene-loop.mp4', alt: 'Two crashed cars after a freeway accident, representing liability coverage.', topic: 'Liability Coverage', type: 'video', story: [
+  liability: { src: 'https://storage.googleapis.com/coverage-coach/liabilitylighter.mp4', alt: 'Two crashed cars after a freeway accident, representing liability coverage.', topic: 'Liability Coverage', type: 'video', story: [
     "Liability coverage pays for damages you cause to other people - their medical bills, their car repairs, their lost wages. Liability doesn't cover anything related to you - it will not pay for your injuries or your car.\n\nLiability is split into three limits that apply for each accident: per person injury, total injuries per accident, and property damage.",
     
     "Let's say you're driving home on a rainy highway. Traffic slows suddenly and you brake hard, but slide into the car ahead of you at 40mph. The other driver suffers a back injury requiring surgery ($85k in bills). Their car is totaled ($30k). Your passenger breaks their wrist ($15k).\n\nNow let's say your auto policy has limits of 50/100/50.",

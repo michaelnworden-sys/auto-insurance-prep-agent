@@ -26,7 +26,7 @@ export async function getInsuranceBotResponse(
         systemInstruction: systemPrompt,
         responseMimeType: 'application/json',
         responseSchema: RESPONSE_SCHEMA,
-        temperature: 0.7,
+        temperature: 0.4,
         topP: 0.9,
       },
       history: history,
