@@ -896,9 +896,9 @@ export const INITIAL_MESSAGE: Message = {
   role: 'model',
   text: `Hi.
 
-Buying car insurance is a pain. It's confusing, full of jargon, and the person selling it to you works on commission.
+Buying car insurance can feel overwhelming. Lots of jargon, plenty of numbers, and it's not always clear what you actually need versus what they're trying to sell you.
 
-I'm here to make sure you don't buy coverage you don't need, and don't skip coverage you'll regret later.
+I'm here to make sure you don't buy coverage you don't need, and don't skip coverage you might regret later.
 
 We'll walk through each type, figure out what makes the most sense for your car and your budget, and then we'll slap it all on a chalkboard so you can go out and buy with confidence.
 
