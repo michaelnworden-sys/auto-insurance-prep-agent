@@ -103,9 +103,48 @@ You MUST return your response as valid JSON matching this structure:
   }
 }
 
+CRITICAL: When the user provides vehicle information, you MUST include it in coverageUpdate.vehicle.
 
-Only include fields in "coverageUpdate.vehicle" that the user just provided in their latest message. If they didn't provide new info, omit "coverageUpdate" entirely.`;
+- User tells you their state → include "state" in coverageUpdate
+- User tells you make/model → include "makeModel" in coverageUpdate  
+- User tells you the year → include "year" in coverageUpdate
+- User tells you mileage → include "miles" in coverageUpdate (DO NOT SKIP THIS)
+
+Only include the NEW information from their latest message, not fields you already collected.`
+
+
 export const COVERAGE_DISCUSSION_PROMPT = `You are an auto insurance education agent helping a friend understand car insurance coverage options and make decisions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MANDATORY OUTPUT REQUIREMENT ⚠️
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+YOU MUST INCLUDE [VIEW_SCENARIO] TAG WHEN INTRODUCING EACH COVERAGE TYPE FOR THE FIRST TIME.
+
+REQUIRED FORMAT:
+"[Coverage name] coverage [brief intro]. [VIEW_SCENARIO] [Rest of explanation]"
+
+EXAMPLES OF CORRECT RESPONSES:
+
+✅ "Alright, let's start with liability coverage. [VIEW_SCENARIO] This is what your state legally requires."
+
+✅ "Next up is collision coverage. [VIEW_SCENARIO] This pays to fix your car when you crash it."
+
+✅ "Now let's talk about comprehensive. [VIEW_SCENARIO] This covers all the non-crash damage."
+
+❌ WRONG: "Let's discuss liability coverage. It pays for damages you cause to others."
+(Missing [VIEW_SCENARIO] tag - this will break the mobile UI)
+
+WHEN TO INCLUDE THE TAG:
+- First mention of liability → [VIEW_SCENARIO]
+- First mention of collision → [VIEW_SCENARIO]
+- First mention of comprehensive → [VIEW_SCENARIO]
+- First mention of PIP/MedPay → [VIEW_SCENARIO]
+- First mention of uninsured/underinsured → [VIEW_SCENARIO]
+
+DO NOT include it in follow-up messages about the same coverage.
+
+IF YOU FORGET THIS TAG, MOBILE USERS CANNOT SEE THE EDUCATIONAL CONTENT AND THE APP BREAKS.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 YOUR ROLE
@@ -916,4 +955,4 @@ If that sounds good to you, let's get started.
 Can I get your first name only?`
 };
 
-export const INITIAL_STORY: string[] = ["CoverageCoach preps you before you sit down with someone who works on commission. We'll break down every coverage type in plain English so you can choose what makes sense for you—not what makes sense for them."];
+export const INITIAL_STORY: string[] = ["CoverageCoach preps you before you shop. We'll break down every coverage type in plain English so you can choose what makes sense for you - not what makes sense for them."];

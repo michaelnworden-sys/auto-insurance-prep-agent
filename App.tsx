@@ -30,67 +30,95 @@ const App: React.FC = () => {
 
 
   const handleSendMessage = useCallback(async (userInput: string) => {
-    if (!userInput.trim()) return;
+  if (!userInput.trim()) return;
 
-    const userMessage: Message = { role: 'user', text: userInput };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setIsLoading(true);
-    setError(null);
-    setIsPlanModalOpen(false); 
+  const userMessage: Message = { role: 'user', text: userInput };
+  const newMessages = [...messages, userMessage];
+  setMessages(newMessages);
+  setIsLoading(true);
+  setError(null);
+  setIsPlanModalOpen(false); 
 
-    try {
-      const chatHistory = newMessages.map(msg => ({
-        role: msg.role,
-        parts: [{ text: msg.text }],
+  try {
+    const chatHistory = newMessages.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.text }],
+    }));
+    
+    const latestUserMessage = chatHistory.pop();
+    let prompt = latestUserMessage?.parts[0].text ?? '';
+
+    // When we just switched to coverage_discussion, reinforce the [VIEW_SCENARIO] instruction
+    const justSwitchedPhases = 
+      conversationPhase === 'coverage_discussion' && 
+      messages.length > 0 && 
+      messages[messages.length - 1].role === 'model' &&
+      messages[messages.length - 1].text.includes('Ready?');
+
+    if (justSwitchedPhases && prompt.toLowerCase().includes('yes')) {
+      prompt = `${prompt}\n\n[IMPORTANT: When you introduce liability coverage in your next response, you MUST include the tag [VIEW_SCENARIO] after your first sentence about liability. Example: "Let's start with liability coverage. [VIEW_SCENARIO] This is what your state requires."]`;
+    }
+
+    console.log('Calling API with phase:', conversationPhase);
+    const { responseText, imageKey, coverageUpdate } = await getInsuranceBotResponse(prompt, chatHistory, conversationPhase);
+    
+    console.log('API Response:', { responseText, imageKey, hasViewScenario: responseText.includes('[VIEW_SCENARIO]') });
+    console.log('🔍 RAW coverageUpdate from API:', JSON.stringify(coverageUpdate, null, 2)); // ← ADD THIS
+    const hasScenario = responseText.includes('[VIEW_SCENARIO]');
+    const cleanedText = responseText.replace('[VIEW_SCENARIO]', '').trim();
+
+    const modelMessage: Message = {
+      role: 'model',
+      text: cleanedText,
+      hasScenario: hasScenario,
+      imageKeyForScenario: hasScenario ? imageKey : undefined,
+    };
+
+    setMessages(prev => [...prev, modelMessage]);
+    setCurrentImageKey(imageKey);
+
+    const storyFromMap = IMAGE_MAP[imageKey]?.story || null;
+    setCurrentStory(storyFromMap);
+
+    if (coverageUpdate) {
+      console.log('Coverage update received:', coverageUpdate);
+      console.log('Current coverageDetails.vehicle:', coverageDetails.vehicle);
+      
+      setCoverageDetails(prev => ({
+        vehicle: { ...prev.vehicle, ...coverageUpdate.vehicle },
+        coverages: { ...prev.coverages, ...coverageUpdate.coverages },
       }));
-      
-      const latestUserMessage = chatHistory.pop();
-      const prompt = latestUserMessage?.parts[0].text ?? '';
 
-      const { responseText, imageKey, coverageUpdate } = await getInsuranceBotResponse(prompt, chatHistory, conversationPhase);
-      
-      const hasScenario = responseText.includes('[VIEW_SCENARIO]');
-      const cleanedText = responseText.replace('[VIEW_SCENARIO]', '').trim();
-
-      const modelMessage: Message = {
-        role: 'model',
-        text: cleanedText,
-        hasScenario: hasScenario,
-        imageKeyForScenario: hasScenario ? imageKey : undefined,
-      };
-
-      setMessages(prev => [...prev, modelMessage]);
-      setCurrentImageKey(imageKey);
-
-      const storyFromMap = IMAGE_MAP[imageKey]?.story || null;
-      setCurrentStory(storyFromMap);
-
-      if (coverageUpdate) {
-        setCoverageDetails(prev => ({
-          vehicle: { ...prev.vehicle, ...coverageUpdate.vehicle },
-          coverages: { ...prev.coverages, ...coverageUpdate.coverages },
-        }));
-
-        if (coverageUpdate.vehicle) {
-          const updatedVehicle = { ...coverageDetails.vehicle, ...coverageUpdate.vehicle };
-          const isVehicleComplete = updatedVehicle.state && updatedVehicle.year && updatedVehicle.makeModel && updatedVehicle.miles;
-          
-          if (isVehicleComplete && conversationPhase === 'info_collection') {
-            setConversationPhase('coverage_discussion');
-          }
+      if (coverageUpdate.vehicle) {
+        const updatedVehicle = { ...coverageDetails.vehicle, ...coverageUpdate.vehicle };
+        console.log('Updated vehicle object:', updatedVehicle);
+        console.log('Is complete?', {
+          state: !!updatedVehicle.state,
+          year: !!updatedVehicle.year,
+          makeModel: !!updatedVehicle.makeModel,
+          miles: !!updatedVehicle.miles
+        });
+        
+        const isVehicleComplete = updatedVehicle.state && updatedVehicle.year && updatedVehicle.makeModel && updatedVehicle.miles;
+        
+        if (isVehicleComplete && conversationPhase === 'info_collection') {
+          console.log('🔄 SWITCHING TO COVERAGE DISCUSSION');
+          setConversationPhase('coverage_discussion');
+        } else {
+          console.log('❌ NOT SWITCHING - Phase:', conversationPhase, 'Complete:', isVehicleComplete);
         }
       }
-
-    } catch (err) {
-      console.error(err);
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-      setError(`Sorry, I ran into a problem. Please try again. Error: ${errorMessage}`);
-      setMessages(prev => [...prev, { role: 'model', text: 'I seem to be having trouble connecting. Please try again later.' }]);
-    } finally {
-      setIsLoading(false);
     }
-  }, [messages, conversationPhase, coverageDetails.vehicle]);
+
+  } catch (err) {
+    console.error(err);
+    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+    setError(`Sorry, I ran into a problem. Please try again. Error: ${errorMessage}`);
+    setMessages(prev => [...prev, { role: 'model', text: 'I seem to be having trouble connecting. Please try again later.' }]);
+  } finally {
+    setIsLoading(false);
+  }
+}, [messages, conversationPhase, coverageDetails.vehicle]);
 
   const handleTogglePlanModal = () => setIsPlanModalOpen(prev => !prev);
   const handleOpenScenarioModal = (key: string) => {
