@@ -1,4 +1,5 @@
-// Fix: Define and export all application-specific types.
+// types.ts (REVISED)
+
 export interface Message {
   role: 'user' | 'model';
   text: string;
@@ -36,10 +37,16 @@ export interface MediaInfo {
   story: string[];
 }
 
+// --- NEW TYPE DEFINITION ---
+// This tells our app what the valid coverage topics are.
+export type CoverageTopic = 'liability' | 'collision' | 'comprehensive' | 'pip' | 'underinsured';
+
+// --- CORRECTED GEMINI RESPONSE TYPE ---
+// The 'story' field is removed because the AI doesn't generate the story,
+// the app looks it up from IMAGE_MAP using the imageKey.
 export interface GeminiResponse {
   responseText: string;
   imageKey: string;
-  story: string[];
   coverageUpdate?: {
     vehicle?: VehicleDetails;
     coverages?: Coverages;

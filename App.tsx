@@ -1,3 +1,5 @@
+// App.tsx (REVISED)
+
 import React, { useState, useCallback } from 'react';
 import { ChatPanel } from './components/ChatPanel';
 import { ImagePanel } from './components/ImagePanel';
@@ -6,7 +8,7 @@ import { MobileHeader } from './components/MobileHeader';
 import { PlanModal } from './components/PlanModal';
 import { ScenarioModal } from './components/ScenarioModal';
 import { getInsuranceBotResponse } from './services/geminiService';
-import { Message, CoverageDetails } from './types';
+import { Message, CoverageDetails, CoverageTopic } from './types'; // Added CoverageTopic
 import { INITIAL_MESSAGE, INITIAL_STORY, PROGRESS_STEPS, IMAGE_MAP } from './constants';
 
 const App: React.FC = () => {
@@ -19,106 +21,111 @@ const App: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [conversationPhase, setConversationPhase] = useState<'info_collection' | 'coverage_discussion'>('info_collection');
   
+  // --- STATE MANAGEMENT REFACTOR ---
+  const [conversationPhase, setConversationPhase] = useState<'info_collection' | 'coverage_discussion' | 'summary'>('info_collection');
+  const [currentCoverageTopic, setCurrentCoverageTopic] = useState<CoverageTopic | null>(null); // <-- 1. NEW STATE VARIABLE
+
   const [isPlanModalOpen, setIsPlanModalOpen] = useState<boolean>(false);
   const [isScenarioModalOpen, setIsScenarioModalOpen] = useState<boolean>(false);
-
-  // --- NEW: State and handler for the tablet dropdown ---
   const [isChalkboardOpen, setIsChalkboardOpen] = useState<boolean>(false);
   const handleToggleChalkboard = () => setIsChalkboardOpen(prev => !prev);
 
 
   const handleSendMessage = useCallback(async (userInput: string) => {
-  if (!userInput.trim()) return;
+    if (!userInput.trim()) return;
 
-  const userMessage: Message = { role: 'user', text: userInput };
-  const newMessages = [...messages, userMessage];
-  setMessages(newMessages);
-  setIsLoading(true);
-  setError(null);
-  setIsPlanModalOpen(false); 
+    const userMessage: Message = { role: 'user', text: userInput };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setIsLoading(true);
+    setError(null);
+    setIsPlanModalOpen(false);
 
-  try {
-    const chatHistory = newMessages.map(msg => ({
-      role: msg.role,
-      parts: [{ text: msg.text }],
-    }));
-    
-    const latestUserMessage = chatHistory.pop();
-    let prompt = latestUserMessage?.parts[0].text ?? '';
-
-    // When we just switched to coverage_discussion, reinforce the [VIEW_SCENARIO] instruction
-    const justSwitchedPhases = 
-      conversationPhase === 'coverage_discussion' && 
-      messages.length > 0 && 
-      messages[messages.length - 1].role === 'model' &&
-      messages[messages.length - 1].text.includes('Ready?');
-
-    if (justSwitchedPhases && prompt.toLowerCase().includes('yes')) {
-      prompt = `${prompt}\n\n[IMPORTANT: When you introduce liability coverage in your next response, you MUST include the tag [VIEW_SCENARIO] after your first sentence about liability. Example: "Let's start with liability coverage. [VIEW_SCENARIO] This is what your state requires."]`;
-    }
-
-    console.log('Calling API with phase:', conversationPhase);
-    const { responseText, imageKey, coverageUpdate } = await getInsuranceBotResponse(prompt, chatHistory, conversationPhase);
-    
-    console.log('API Response:', { responseText, imageKey, hasViewScenario: responseText.includes('[VIEW_SCENARIO]') });
-    console.log('🔍 RAW coverageUpdate from API:', JSON.stringify(coverageUpdate, null, 2)); // ← ADD THIS
-    const hasScenario = responseText.includes('[VIEW_SCENARIO]');
-    const cleanedText = responseText.replace('[VIEW_SCENARIO]', '').trim();
-
-    const modelMessage: Message = {
-      role: 'model',
-      text: cleanedText,
-      hasScenario: hasScenario,
-      imageKeyForScenario: hasScenario ? imageKey : undefined,
-    };
-
-    setMessages(prev => [...prev, modelMessage]);
-    setCurrentImageKey(imageKey);
-
-    const storyFromMap = IMAGE_MAP[imageKey]?.story || null;
-    setCurrentStory(storyFromMap);
-
-    if (coverageUpdate) {
-      console.log('Coverage update received:', coverageUpdate);
-      console.log('Current coverageDetails.vehicle:', coverageDetails.vehicle);
-      
-      setCoverageDetails(prev => ({
-        vehicle: { ...prev.vehicle, ...coverageUpdate.vehicle },
-        coverages: { ...prev.coverages, ...coverageUpdate.coverages },
+    try {
+      const chatHistory = newMessages.map(msg => ({
+        role: msg.role,
+        parts: [{ text: msg.text }],
       }));
+      
+      const latestUserMessage = chatHistory.pop();
+      let prompt = latestUserMessage?.parts[0].text ?? '';
 
-      if (coverageUpdate.vehicle) {
+      // --- 3. PASS THE NEW STATE TO THE API ---
+      console.log(`Calling API with phase: ${conversationPhase}, topic: ${currentCoverageTopic}`);
+      const { responseText, imageKey, coverageUpdate } = await getInsuranceBotResponse(
+        prompt, 
+        chatHistory, 
+        conversationPhase, 
+        currentCoverageTopic // <-- PASSING THE CURRENT TOPIC
+      );
+      
+      console.log('API Response:', { responseText, imageKey });
+      const hasScenario = responseText.includes('[VIEW_SCENARIO]');
+      const cleanedText = responseText.replace('[VIEW_SCENARIO]', '').trim();
+
+      const modelMessage: Message = {
+        role: 'model',
+        text: cleanedText,
+        hasScenario: hasScenario,
+        imageKeyForScenario: hasScenario ? imageKey : undefined,
+      };
+
+      setMessages(prev => [...prev, modelMessage]);
+      setCurrentImageKey(imageKey);
+      setCurrentStory(IMAGE_MAP[imageKey]?.story || null);
+
+      if (coverageUpdate) {
+        setCoverageDetails(prev => ({
+          vehicle: { ...prev.vehicle, ...coverageUpdate.vehicle },
+          coverages: { ...prev.coverages, ...coverageUpdate.coverages },
+        }));
+
+        // --- PHASE & TOPIC SWITCHING LOGIC ---
         const updatedVehicle = { ...coverageDetails.vehicle, ...coverageUpdate.vehicle };
-        console.log('Updated vehicle object:', updatedVehicle);
-        console.log('Is complete?', {
-          state: !!updatedVehicle.state,
-          year: !!updatedVehicle.year,
-          makeModel: !!updatedVehicle.makeModel,
-          miles: !!updatedVehicle.miles
-        });
-        
         const isVehicleComplete = updatedVehicle.state && updatedVehicle.year && updatedVehicle.makeModel && updatedVehicle.miles;
-        
+
+        // 2. INITIALIZE THE FIRST TOPIC
         if (isVehicleComplete && conversationPhase === 'info_collection') {
           console.log('🔄 SWITCHING TO COVERAGE DISCUSSION');
           setConversationPhase('coverage_discussion');
-        } else {
-          console.log('❌ NOT SWITCHING - Phase:', conversationPhase, 'Complete:', isVehicleComplete);
+          setCurrentCoverageTopic('liability'); // <-- START WITH LIABILITY
+        }
+
+        // 4. ADVANCE TO THE NEXT TOPIC
+        if (conversationPhase === 'coverage_discussion' && coverageUpdate.coverages) {
+          const newlyDecided = Object.keys(coverageUpdate.coverages)[0];
+          console.log(`User just decided on: ${newlyDecided}`);
+
+          let nextTopic: CoverageTopic | null = null;
+          switch (newlyDecided) {
+            case 'liability':     nextTopic = 'collision'; break;
+            case 'collision':     nextTopic = 'comprehensive'; break;
+            case 'comprehensive': nextTopic = 'pip'; break;
+            case 'pip':           nextTopic = 'underinsured'; break;
+            case 'underinsured':  
+              console.log('✅ All coverage topics complete. Moving to summary.');
+              setConversationPhase('summary');
+              setCurrentCoverageTopic(null); // Clear the topic for the summary phase
+              break;
+          }
+
+          if (nextTopic) {
+            console.log(`🚀 Advancing to next topic: ${nextTopic}`);
+            setCurrentCoverageTopic(nextTopic);
+          }
         }
       }
-    }
 
-  } catch (err) {
-    console.error(err);
-    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-    setError(`Sorry, I ran into a problem. Please try again. Error: ${errorMessage}`);
-    setMessages(prev => [...prev, { role: 'model', text: 'I seem to be having trouble connecting. Please try again later.' }]);
-  } finally {
-    setIsLoading(false);
-  }
-}, [messages, conversationPhase, coverageDetails.vehicle]);
+    } catch (err) {
+      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(`Sorry, I ran into a problem. Please try again. Error: ${errorMessage}`);
+      setMessages(prev => [...prev, { role: 'model', text: 'I seem to be having trouble connecting. Please try again later.' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [messages, conversationPhase, currentCoverageTopic, coverageDetails.vehicle]);
 
   const handleTogglePlanModal = () => setIsPlanModalOpen(prev => !prev);
   const handleOpenScenarioModal = (key: string) => {
@@ -139,10 +146,11 @@ const App: React.FC = () => {
   }).length;
   const progressPercent = (completedSteps / PROGRESS_STEPS.length) * 100;
 
+  // --- THE REST OF THE FILE (UI) IS UNCHANGED ---
   return (
     <div className="flex flex-col h-screen font-sans bg-slate-900 text-gray-200 overflow-hidden">
       
-      {/* --- MOBILE LAYOUT (No Changes) --- */}
+      {/* --- MOBILE LAYOUT --- */}
       <div className="md:hidden flex flex-col h-full w-full">
         <MobileHeader onTogglePlan={handleTogglePlanModal} completedSteps={completedSteps} />
         <main className="flex-1 pt-16 h-full">
@@ -169,9 +177,8 @@ const App: React.FC = () => {
         />
       </div>
 
-      {/* --- NEW TABLET LAYOUT --- */}
+      {/* --- TABLET LAYOUT --- */}
       <main className="hidden md:flex lg:hidden flex-col flex-1 w-full h-full p-2.5 gap-2.5">
-          {/* Collapsible Chalkboard Header */}
           <div className="flex-shrink-0">
               <div 
                 className="bg-slate-800 rounded-[15px] p-4 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition-colors"
@@ -183,7 +190,6 @@ const App: React.FC = () => {
                 </svg>
               </div>
 
-              {/* Conditionally Rendered Chalkboard Panel */}
               {isChalkboardOpen && (
                   <div className="mt-2.5 rounded-[15px] overflow-hidden bg-slate-800 animate-fade-in">
                       <ChalkboardPanel 
@@ -195,7 +201,6 @@ const App: React.FC = () => {
               )}
           </div>
           
-          {/* 50/50 Split for Image and Chat */}
           <div className="flex-1 flex flex-row gap-2.5 overflow-hidden">
               <div className="w-1/2 h-full rounded-[15px] overflow-hidden">
                   <ImagePanel imageKey={currentImageKey} story={currentStory} />
@@ -211,7 +216,7 @@ const App: React.FC = () => {
           </div>
       </main>
       
-      {/* --- DESKTOP LAYOUT (No Changes) --- */}
+      {/* --- DESKTOP LAYOUT --- */}
       <main className="hidden lg:flex flex-row flex-1 w-full h-full p-2.5 gap-2.5">
         <div className="w-1/2 h-full flex-shrink-0 flex-col gap-2.5 flex">
           <div className="h-1/3 rounded-[15px] overflow-hidden bg-slate-800">
@@ -235,7 +240,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Basic animation for the dropdown content */}
       <style>{`
         @keyframes fade-in {
             from { opacity: 0; transform: translateY(-10px); }

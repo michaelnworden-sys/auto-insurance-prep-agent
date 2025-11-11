@@ -1,6 +1,17 @@
+// geminiService.ts (REVISED)
+
 import { GoogleGenAI } from "@google/genai";
-import { INFO_COLLECTION_PROMPT, COVERAGE_DISCUSSION_PROMPT, RESPONSE_SCHEMA } from '../constants';
-import { GeminiResponse, HistoryItem } from '../types';
+import { 
+  INFO_COLLECTION_PROMPT, 
+  LIABILITY_PROMPT,
+  COLLISION_PROMPT,
+  COMPREHENSIVE_PROMPT,
+  PIP_PROMPT,
+  UNDERINSURED_PROMPT,
+  SUMMARY_PROMPT,
+  RESPONSE_SCHEMA 
+} from '../constants';
+import { GeminiResponse, HistoryItem, CoverageTopic } from '../types'; // We'll need to add CoverageTopic to types.ts later
 
 const API_KEY = process.env.API_KEY;
 
@@ -10,15 +21,46 @@ if (!API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
+// --- UPDATED FUNCTION SIGNATURE ---
 export async function getInsuranceBotResponse(
   prompt: string, 
   history: HistoryItem[],
-  conversationPhase: 'info_collection' | 'coverage_discussion'
+  conversationPhase: 'info_collection' | 'coverage_discussion' | 'summary',
+  currentCoverageTopic?: CoverageTopic | null
 ): Promise<GeminiResponse> {
   try {
-    const systemPrompt = conversationPhase === 'info_collection' 
-      ? INFO_COLLECTION_PROMPT 
-      : COVERAGE_DISCUSSION_PROMPT;
+    let systemPrompt;
+
+    // --- NEW, SMARTER PROMPT SELECTION LOGIC ---
+    if (conversationPhase === 'info_collection') {
+      systemPrompt = INFO_COLLECTION_PROMPT;
+    } else if (conversationPhase === 'summary') {
+      systemPrompt = SUMMARY_PROMPT; 
+    } else {
+      // This is the core of our refactor.
+      // We select a small, focused prompt based on the current topic.
+      switch (currentCoverageTopic) {
+        case 'liability': 
+          systemPrompt = LIABILITY_PROMPT; 
+          break;
+        case 'collision': 
+          systemPrompt = COLLISION_PROMPT; 
+          break;
+        case 'comprehensive': 
+          systemPrompt = COMPREHENSIVE_PROMPT; 
+          break;
+        case 'pip': 
+          systemPrompt = PIP_PROMPT; 
+          break;
+        case 'underinsured': 
+          systemPrompt = UNDERINSURED_PROMPT; 
+          break;
+        default: 
+          // Fallback in case something goes wrong
+          console.warn(`No specific prompt for topic: ${currentCoverageTopic}. Using a generic fallback.`);
+          systemPrompt = SUMMARY_PROMPT; 
+      }
+    }
 
     const chat = ai.chats.create({
       model: 'gemini-2.5-flash',
@@ -35,7 +77,6 @@ export async function getInsuranceBotResponse(
     const result = await chat.sendMessage({ message: prompt });
     const jsonString = result.text.trim();
     
-    // Sometimes the model might wrap the JSON in markdown backticks
     const cleanedJsonString = jsonString.replace(/^```json\n?/, '').replace(/```$/, '');
     
     const parsedResponse: GeminiResponse = JSON.parse(cleanedJsonString);
