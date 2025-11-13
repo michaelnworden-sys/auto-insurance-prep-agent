@@ -1,34 +1,89 @@
 // services/ttsService.ts
 
-// This is the API key for the Text-to-Speech service.
-// It's very important that the name starts with "REACT_APP_".
-const TTS_API_KEY = "AIzaSyAPKtQVNSm6zJAPCe62L-dtRImvbbEA_3c";
+// --- CONFIGURATION ---
+// IMPORTANT: Replace with the Trigger URL of the Cloud Function you deployed.
+const CLOUD_FUNCTION_URL = 'https://get-tts-api-key-561750363497.us-central1.run.app'; 
+// ---------------------
 
-// This is the function that App.tsx will call.
-// It takes a string of text and returns a playable audio object.
+// URL for the Google Cloud Text-to-Speech API.
+const GOOGLE_TTS_API_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize';
+
+// A simple in-memory cache to store the API key after fetching it once.
+let cachedApiKey: string | null = null;
+
+/**
+ * Securely fetches the TTS API key from our Cloud Function proxy.
+ * Caches the key in memory to avoid fetching it on every request.
+ * @returns {Promise<string|null>} The API key, or null if it fails.
+ */
+const getTTSApiKey = async (): Promise<string | null> => {
+  // If we already have the key, return it immediately without a network call.
+  if (cachedApiKey) {
+    return cachedApiKey;
+  }
+  
+  // Check if the URL was configured correctly.
+  if (!CLOUD_FUNCTION_URL) {
+      console.error('Cloud Function URL is not configured in ttsService.ts');
+      return null;
+  }
+
+  try {
+    // Call the Cloud Function to get the key. This only happens ONCE.
+    const response = await fetch(CLOUD_FUNCTION_URL);
+    if (!response.ok) {
+        console.error(`Failed to fetch API key from proxy: ${response.statusText}`);
+        return null;
+    }
+    const data = await response.json();
+    if (!data.apiKey) {
+        console.error('API key was not found in the response from the proxy.');
+        return null;
+    }
+    
+    // Store the key in our cache and return it.
+    cachedApiKey = data.apiKey;
+    return cachedApiKey;
+
+  } catch (error) {
+    console.error('Failed to fetch API key:', error);
+    return null;
+  }
+};
+
+
+/**
+ * This is the main function that App.tsx will call.
+ * It takes a string of text and returns a playable audio object.
+ * It now securely fetches the API key on the first run.
+ */
 export async function convertTextToSpeech(text: string): Promise<HTMLAudioElement | null> {
   // Don't do anything if the text is empty.
   if (!text.trim()) {
     return null;
   }
 
+  // Get the API key securely.
+  const apiKey = await getTTSApiKey();
+
   // If the API key is missing, log an error and stop.
-  if (!TTS_API_KEY) {
-    console.error("ERROR: REACT_APP_TTS_API_KEY is not set in your environment variables.");
+  if (!apiKey) {
+    console.error("ERROR: Could not retrieve the TTS API Key.");
     return null;
   }
 
-  // This is the web address for Google's Text-to-Speech API.
-  const apiUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${TTS_API_KEY}`;
+  // Construct the API URL with the secure key.
+  const apiUrl = `${GOOGLE_TTS_API_URL}?key=${apiKey}`;
 
   // We prepare the request, telling Google what text to use and what voice we want.
+  // This preserves your custom, high-quality voice setting.
   const requestBody = {
     input: {
       text: text,
     },
     voice: {
       languageCode: 'en-US',
-      name: 'en-US-Chirp3-HD-Charon', // This is a great, high-quality modern voice.
+      name: 'en-US-Chirp3-HD-Charon', 
     },
     audioConfig: {
       audioEncoding: 'MP3',
