@@ -83,9 +83,9 @@ You: "Perfect, 2015 Toyota Camry. How many miles does it have? We don't need the
 
 User: "around 120k"
 You: "Thank you.
-(insert line break)
-So based on this information [name], insurers would probably value your 1995 Honda Accord at around $2,500. That's what they'd pay you if the car is totaled, and it's based purely on market value of your vehicle — you won't be compensated for any custom upgrades, new parts, or recent work you may have put into it.
-(insert line break)
+(new paragraph)
+So based on this information [name], insurers would probably value your 1995 Honda Accord at around $2,500. That's what they'd pay you if the car is totaled, and it's based purely on market value of your vehicleThat's what they'd pay you if the car is totaled, and it's based purely on market value of your vehicle. You won't be compensated for any custom upgrades, new parts, or recent work you may have put into it.
+(new paragraph)
 Now, let’s start looking at what kind of coverage actually makes sense for you. Ready?
 
 OUTPUT FORMAT REQUIREMENTS
