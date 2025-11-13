@@ -1,3 +1,5 @@
+// components/ChatPanel.tsx (Updated)
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Message } from '../types';
 
@@ -29,7 +31,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, error
 
   useEffect(scrollToBottom, [messages, isLoading]);
 
-  // Effect to auto-focus the input field
   useEffect(() => {
     if (!isLoading && messages[messages.length - 1]?.role === 'model') {
       inputRef.current?.focus();
@@ -53,9 +54,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, error
         }
         .animate-fade-in-message { animation: fade-in-message 0.3s ease-out forwards; }
       `}</style>
-      <header className="hidden lg:block p-4 border-b border-slate-700 flex-shrink-0">
-         <h1 className="text-xl font-light text-cyan-400 text-center">Auto Insurance Prep Agent</h1>
-      </header>
+      
+      {/* The old <header> section has been removed from here. */}
 
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
         {messages.map((msg, index) => (

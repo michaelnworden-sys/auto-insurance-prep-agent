@@ -1,6 +1,6 @@
-// App.tsx (REVISED)
+// App.tsx (FINAL VERSION with corrected ChatPanel header)
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { ChatPanel } from './components/ChatPanel';
 import { ImagePanel } from './components/ImagePanel';
 import { ChalkboardPanel } from './components/ChalkboardPanel';
@@ -8,8 +8,22 @@ import { MobileHeader } from './components/MobileHeader';
 import { PlanModal } from './components/PlanModal';
 import { ScenarioModal } from './components/ScenarioModal';
 import { getInsuranceBotResponse } from './services/geminiService';
-import { Message, CoverageDetails, CoverageTopic } from './types'; // Added CoverageTopic
+import { convertTextToSpeech } from './services/ttsService'; 
+import { Message, CoverageDetails, CoverageTopic } from './types';
 import { INITIAL_MESSAGE, INITIAL_STORY, PROGRESS_STEPS, IMAGE_MAP } from './constants';
+
+const SpeakerOnIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+  </svg>
+);
+
+const SpeakerOffIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6 4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+  </svg>
+);
+
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
@@ -22,14 +36,26 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   
-  // --- STATE MANAGEMENT REFACTOR ---
   const [conversationPhase, setConversationPhase] = useState<'info_collection' | 'coverage_discussion' | 'summary'>('info_collection');
-  const [currentCoverageTopic, setCurrentCoverageTopic] = useState<CoverageTopic | null>(null); // <-- 1. NEW STATE VARIABLE
+  const [currentCoverageTopic, setCurrentCoverageTopic] = useState<CoverageTopic | null>(null);
 
   const [isPlanModalOpen, setIsPlanModalOpen] = useState<boolean>(false);
   const [isScenarioModalOpen, setIsScenarioModalOpen] = useState<boolean>(false);
   const [isChalkboardOpen, setIsChalkboardOpen] = useState<boolean>(false);
   const handleToggleChalkboard = () => setIsChalkboardOpen(prev => !prev);
+
+  const [isSoundEnabled, setIsSoundEnabled] = useState<boolean>(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handleToggleSound = () => {
+    setIsSoundEnabled(prev => {
+        const isCurrentlyEnabled = prev;
+        if (isCurrentlyEnabled && audioRef.current) {
+            audioRef.current.pause();
+        }
+        return !isCurrentlyEnabled;
+    });
+  };
 
 
   const handleSendMessage = useCallback(async (userInput: string) => {
@@ -51,16 +77,13 @@ const App: React.FC = () => {
       const latestUserMessage = chatHistory.pop();
       let prompt = latestUserMessage?.parts[0].text ?? '';
 
-      // --- 3. PASS THE NEW STATE TO THE API ---
-      console.log(`Calling API with phase: ${conversationPhase}, topic: ${currentCoverageTopic}`);
       const { responseText, imageKey, coverageUpdate } = await getInsuranceBotResponse(
         prompt, 
         chatHistory, 
         conversationPhase, 
-        currentCoverageTopic // <-- PASSING THE CURRENT TOPIC
+        currentCoverageTopic
       );
       
-      console.log('API Response:', { responseText, imageKey });
       const hasScenario = responseText.includes('[VIEW_SCENARIO]');
       const cleanedText = responseText.replace('[VIEW_SCENARIO]', '').trim();
 
@@ -75,28 +98,38 @@ const App: React.FC = () => {
       setCurrentImageKey(imageKey);
       setCurrentStory(IMAGE_MAP[imageKey]?.story || null);
 
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      if (isSoundEnabled && cleanedText) {
+        try {
+          const audio = await convertTextToSpeech(cleanedText);
+          if (audio) {
+              audioRef.current = audio;
+              audioRef.current.play();
+          }
+        } catch (ttsError) {
+            console.error("Text-to-speech failed:", ttsError);
+        }
+      }
+
       if (coverageUpdate) {
         setCoverageDetails(prev => ({
           vehicle: { ...prev.vehicle, ...coverageUpdate.vehicle },
           coverages: { ...prev.coverages, ...coverageUpdate.coverages },
         }));
 
-        // --- PHASE & TOPIC SWITCHING LOGIC ---
         const updatedVehicle = { ...coverageDetails.vehicle, ...coverageUpdate.vehicle };
         const isVehicleComplete = updatedVehicle.state && updatedVehicle.year && updatedVehicle.makeModel && updatedVehicle.miles;
 
-        // 2. INITIALIZE THE FIRST TOPIC
         if (isVehicleComplete && conversationPhase === 'info_collection') {
-          console.log('🔄 SWITCHING TO COVERAGE DISCUSSION');
           setConversationPhase('coverage_discussion');
-          setCurrentCoverageTopic('liability'); // <-- START WITH LIABILITY
+          setCurrentCoverageTopic('liability');
         }
 
-        // 4. ADVANCE TO THE NEXT TOPIC
         if (conversationPhase === 'coverage_discussion' && coverageUpdate.coverages) {
           const newlyDecided = Object.keys(coverageUpdate.coverages)[0];
-          console.log(`User just decided on: ${newlyDecided}`);
-
           let nextTopic: CoverageTopic | null = null;
           switch (newlyDecided) {
             case 'liability':     nextTopic = 'collision'; break;
@@ -104,14 +137,11 @@ const App: React.FC = () => {
             case 'comprehensive': nextTopic = 'pip'; break;
             case 'pip':           nextTopic = 'underinsured'; break;
             case 'underinsured':  
-              console.log('✅ All coverage topics complete. Moving to summary.');
               setConversationPhase('summary');
-              setCurrentCoverageTopic(null); // Clear the topic for the summary phase
+              setCurrentCoverageTopic(null);
               break;
           }
-
           if (nextTopic) {
-            console.log(`🚀 Advancing to next topic: ${nextTopic}`);
             setCurrentCoverageTopic(nextTopic);
           }
         }
@@ -125,7 +155,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, conversationPhase, currentCoverageTopic, coverageDetails.vehicle]);
+  }, [messages, conversationPhase, currentCoverageTopic, coverageDetails.vehicle, isSoundEnabled]);
 
   const handleTogglePlanModal = () => setIsPlanModalOpen(prev => !prev);
   const handleOpenScenarioModal = (key: string) => {
@@ -146,13 +176,17 @@ const App: React.FC = () => {
   }).length;
   const progressPercent = (completedSteps / PROGRESS_STEPS.length) * 100;
 
-  // --- THE REST OF THE FILE (UI) IS UNCHANGED ---
   return (
     <div className="flex flex-col h-screen font-sans bg-slate-900 text-gray-200 overflow-hidden">
       
       {/* --- MOBILE LAYOUT --- */}
       <div className="md:hidden flex flex-col h-full w-full">
-        <MobileHeader onTogglePlan={handleTogglePlanModal} completedSteps={completedSteps} />
+        <MobileHeader 
+          onTogglePlan={handleTogglePlanModal} 
+          completedSteps={completedSteps} 
+          isSoundEnabled={isSoundEnabled}
+          onToggleSound={handleToggleSound}
+        />
         <main className="flex-1 pt-16 h-full">
             <ChatPanel 
               messages={messages} 
@@ -181,13 +215,17 @@ const App: React.FC = () => {
       <main className="hidden md:flex lg:hidden flex-col flex-1 w-full h-full p-2.5 gap-2.5">
           <div className="flex-shrink-0">
               <div 
-                className="bg-slate-800 rounded-[15px] p-4 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition-colors"
+                className="bg-slate-800 rounded-[15px] p-4 flex justify-between items-center cursor-pointer"
                 onClick={handleToggleChalkboard}
               >
-                <h2 className="font-bold text-lg text-white">Your Auto Insurance Plan</h2>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-cyan-400 transition-transform duration-300 ${isChalkboardOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <h2 
+                  className="font-bold text-lg text-white flex-1"
+                >
+                  Your Auto Insurance Plan
+                </h2>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-cyan-400 transition-transform duration-300`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
               </div>
 
               {isChalkboardOpen && (
@@ -205,13 +243,26 @@ const App: React.FC = () => {
               <div className="w-1/2 h-full rounded-[15px] overflow-hidden">
                   <ImagePanel imageKey={currentImageKey} story={currentStory} />
               </div>
-              <div className="w-1/2 h-full rounded-[15px] overflow-hidden">
-                  <ChatPanel 
-                      messages={messages} 
-                      isLoading={isLoading} 
-                      error={error} 
-                      onSendMessage={handleSendMessage}
-                  />
+              <div className="w-1/2 h-full rounded-[15px] overflow-hidden flex flex-col bg-slate-800">
+                  {/* NEW: Correct Header for Tablet */}
+                  <div className="p-4 flex justify-between items-center border-b border-slate-700 flex-shrink-0">
+                    <h1 className="text-xl font-light text-cyan-400">Auto Insurance Prep Agent</h1>
+                    <button
+                      onClick={handleToggleSound}
+                      className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      aria-label={isSoundEnabled ? 'Disable sound' : 'Enable sound'}
+                    >
+                      {isSoundEnabled ? <SpeakerOnIcon /> : <SpeakerOffIcon />}
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-auto">
+                    <ChatPanel 
+                        messages={messages} 
+                        isLoading={isLoading} 
+                        error={error} 
+                        onSendMessage={handleSendMessage}
+                    />
+                  </div>
               </div>
           </div>
       </main>
@@ -230,13 +281,26 @@ const App: React.FC = () => {
             <ImagePanel imageKey={currentImageKey} story={currentStory} />
           </div>
         </div>
-        <div className="w-1/2 h-full flex-col rounded-[15px] overflow-hidden flex">
-          <ChatPanel 
-            messages={messages} 
-            isLoading={isLoading} 
-            error={error} 
-            onSendMessage={handleSendMessage} 
-          />
+        <div className="w-1/2 h-full flex flex-col rounded-[15px] overflow-hidden bg-slate-800">
+            {/* NEW: Correct Header for Desktop */}
+            <div className="p-4 flex justify-between items-center border-b border-slate-700 flex-shrink-0">
+              <h1 className="text-xl font-light text-cyan-400">Auto Insurance Prep Agent</h1>
+              <button
+                onClick={handleToggleSound}
+                className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                aria-label={isSoundEnabled ? 'Disable sound' : 'Enable sound'}
+              >
+                {isSoundEnabled ? <SpeakerOnIcon /> : <SpeakerOffIcon />}
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto">
+              <ChatPanel 
+                messages={messages} 
+                isLoading={isLoading} 
+                error={error} 
+                onSendMessage={handleSendMessage} 
+              />
+            </div>
         </div>
       </main>
 
